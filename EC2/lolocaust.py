@@ -209,6 +209,37 @@ def getWhitelist:
     
     return filteredWhitelist
     
+def getKickReasons:    
+	theurl = 'http://bfgoons.com/lolocaust/kickreasons'
+	username = 'lljk'
+	password = 'lljk'
+	
+	passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+	passman.add_password(None, theurl, username, password)
+	
+	authhandler = urllib2.HTTPBasicAuthHandler(passman)
+	
+	opener = urllib2.build_opener(authhandler)
+	
+	urllib2.install_opener(opener)
+	
+	pagehandle = urllib2.urlopen(theurl)
+	
+	unfilteredKickReasons = pagehandle.read()
+	
+	filteredKickReasons = unfilteredKickReasons.splitlines()
+	
+	# filter out reasons longer than 80 characters
+	tmpList = []
+	for reason in filteredKickReasons:
+		if len(reason) < 80 : tmpList.append(reason)
+	filteredKickReasons = tmpList
+	tmpList = []
+	
+	filteredKickReasons = frozenset(filteredKickReasons) # removes duplicates
+    
+    return filteredKickReasons
+    
 ###################################################################################
 #
 # END BFGOONS CUSTOM CODE
