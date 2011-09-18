@@ -7,6 +7,8 @@
 
 #!/usr/bin/python
 
+# DICE code -- DO NOT DELETE
+
 # path used above is for godaddy
 # previous path was: /usr/local/bin/python
 from struct import *
@@ -19,6 +21,7 @@ import threading
 import md5
 #import readline
 import os
+import urllib2 # Needed to retreive whitelist
 
 # This is an example program that connects to the Remote Administration port of a game server.
 # Once logged in, you can use this to send commands to control the game server.
@@ -164,6 +167,35 @@ def generatePasswordHash(salt, password):
 	m.update(salt)
 	m.update(password)
 	return m.digest()
+
+###################################################################################
+#
+# END DICE CODE
+#
+###################################################################################
+
+def getWhitelist:
+    theurl = 'http://bfgoons.com/vip/viplist'
+    username = 'lljk'
+    password = 'lljk'
+
+    passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+    passman.add_password(None, theurl, username, password)
+
+    authhandler = urllib2.HTTPBasicAuthHandler(passman)
+
+    opener = urllib2.build_opener(authhandler)
+
+    urllib2.install_opener(opener)
+
+    pagehandle = urllib2.urlopen(theurl)
+
+    unfilteredWhitelist = pagehandle.read()
+
+    filteredWhitelist = unfilteredWhitelist.split()
+    filteredWhitelist = frozenset(filteredWhitelist)
+    
+    return filteredWhitelist
 
 ###################################################################################
 # Example program
