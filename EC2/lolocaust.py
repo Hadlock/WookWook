@@ -28,6 +28,7 @@ import md5
 #import readline
 import os
 import urllib2 # Needed to retreive whitelist
+import random
 
 # This is an example program that connects to the Remote Administration port of a game server.
 # Once logged in, you can use this to send commands to control the game server.
@@ -186,7 +187,7 @@ def generatePasswordHash(salt, password):
 #
 ###################################################################################
 
-def getWhitelist:
+def getWhitelist():
     theurl = 'http://bfgoons.com/vip/viplist'
     username = 'lljk'
     password = 'lljk'
@@ -209,7 +210,7 @@ def getWhitelist:
     
     return filteredWhitelist
     
-def getKickReasons:    
+def getKickReasons():    
 	theurl = 'http://bfgoons.com/lolocaust/kickreasons'
 	username = 'lljk'
 	password = 'lljk'
@@ -240,6 +241,11 @@ def getKickReasons:
     
     return filteredKickReasons
     
+def getRandomKickReason():
+	listOfKickReasons = getKickReasons()
+	reason = random.sample(listOfKickReasons, 1)
+	return ''.join(reason) # this line is proof Python sucks. Why can't I print reason and expect a string, or use a .toString() method?
+    
 ###################################################################################
 #
 # END BFGOONS CUSTOM CODE
@@ -263,7 +269,7 @@ if __name__ == '__main__':
 	port = 48888        # server RCON port (NOT game server port)
 	pw = "123456"       # server RCPM password
 	user = ""           # typically left blank
-	reason = ""         # typically left blank
+	# no need for reason anymore, it's grabbed by this script
 	x = "" # unused, see below
 
 	receiveBuffer = ""
@@ -282,8 +288,6 @@ if __name__ == '__main__':
 			pw = v
 		elif k == '-u':
 			user = v
-		elif k == '-r':
-			reason = v
 		elif k == '-x':
 			x = v
 
@@ -345,7 +349,7 @@ if __name__ == '__main__':
 					
 				# oh hey, this is the actual kick function. you might want to customize this part!
 				# admin.kickPlayer <user> [reason]
-				command = "admin.kickPlayer " + "\"" + user + "\" " + "\"" + reason + "\""
+				command = "admin.kickPlayer " + "\"" + user + "\" " + "\"" + getRandomKickReason() + "\""
 
 				print command
 				
