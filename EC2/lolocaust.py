@@ -7,7 +7,13 @@
 
 #!/usr/bin/python
 
-# DICE code -- DO NOT DELETE
+###################################################################################
+#
+# START DICE CODE
+#
+# DO NOT DELETE
+#
+###################################################################################
 
 # path used above is for godaddy
 # previous path was: /usr/local/bin/python
@@ -174,6 +180,12 @@ def generatePasswordHash(salt, password):
 #
 ###################################################################################
 
+###################################################################################
+#
+# START BFGOONS CUSTOM CODE
+#
+###################################################################################
+
 def getWhitelist:
     theurl = 'http://bfgoons.com/vip/viplist'
     username = 'lljk'
@@ -193,12 +205,18 @@ def getWhitelist:
     unfilteredWhitelist = pagehandle.read()
 
     filteredWhitelist = unfilteredWhitelist.split()
-    filteredWhitelist = frozenset(filteredWhitelist)
+    filteredWhitelist = frozenset(filteredWhitelist) # removes duplicates
     
     return filteredWhitelist
+    
+###################################################################################
+#
+# END BFGOONS CUSTOM CODE
+#
+###################################################################################
 
 ###################################################################################
-# Example program
+# Main loop
 # 
 
 if __name__ == '__main__':
