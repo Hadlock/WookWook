@@ -188,9 +188,9 @@ def generatePasswordHash(salt, password):
 ###################################################################################
 
 def getWhitelist():
-    theurl = 'http://bfgoons.com/vip/viplist'
-    username = 'lljk'
-    password = 'lljk'
+    theurl = ''
+    username = ''
+    password = ''
 
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
     passman.add_password(None, theurl, username, password)
@@ -211,9 +211,9 @@ def getWhitelist():
     return filteredWhitelist
     
 def getKickReasons():    
-	theurl = 'http://bfgoons.com/lolocaust/kickreasons'
-	username = 'lljk'
-	password = 'lljk'
+	theurl = ''
+	username = ''
+	password = ''
 	
 	passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
 	passman.add_password(None, theurl, username, password)
@@ -238,13 +238,13 @@ def getKickReasons():
 	tmpList = []
 	
 	filteredKickReasons = frozenset(filteredKickReasons) # removes duplicates
-    
-    return filteredKickReasons
+	
+	return filteredKickReasons
     
 def getRandomKickReason():
 	listOfKickReasons = getKickReasons()
 	reason = random.sample(listOfKickReasons, 1)
-	return ''.join(reason) # this line is proof Python sucks. Why can't I print reason and expect a string, or use a .toString() method?
+	return ''.join(reason)
     
 ###################################################################################
 #
@@ -260,9 +260,7 @@ if __name__ == '__main__':
 	from getopt import getopt
 	import sys
 
-	global running
-
-	print "Remote administration console for BFBC2"
+#	print "Remote administration console for BFBC2"
 #	history_file = os.path.join( os.environ["HOME"], ".bfbc2_rcon_history" )
 
 	host = "127.0.0.1"  # server ip address (NOT procon server IP)
@@ -275,7 +273,6 @@ if __name__ == '__main__':
 	receiveBuffer = ""
 
 	serverSocket = None
-	running = True
 
 	# HACK HACK HACK: For some reason the last argument never gets parsed, so we add a junk argument at the end
 	opts, args = getopt(sys.argv[1:], 'h:p:a:u:r:x')
@@ -303,19 +300,19 @@ if __name__ == '__main__':
 
 			serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-			print 'Connecting to port: %s:%d...' % ( host, port )
+			# print 'Connecting to port: %s:%d...' % ( host, port )
 			serverSocket.connect( ( host, port ) )
 			serverSocket.setblocking(1)
 
 			if pw is not None:
-				print 'Logging in - 1: retrieving salt...'
+				# print 'Logging in - 1: retrieving salt...'
 
 				# Retrieve this connection's 'salt' (magic value used when encoding password) from server
 				getPasswordSaltRequest = EncodeClientRequest( [ "login.hashed" ] )
 				serverSocket.send(getPasswordSaltRequest)
 
 				[getPasswordSaltResponse, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
-				printPacket(DecodePacket(getPasswordSaltResponse))
+				#printPacket(DecodePacket(getPasswordSaltResponse))
 
 				[isFromServer, isResponse, sequence, words] = DecodePacket(getPasswordSaltResponse)
 
@@ -323,59 +320,69 @@ if __name__ == '__main__':
 				if words[0] != "OK":
 					sys.exit(0);
 
-				print 'Received salt: ' + words[1]
+				# print 'Received salt: ' + words[1]
 
 				# Given the salt and the password, combine them and compute hash value
 				salt = words[1].decode("hex")
 				passwordHash = generatePasswordHash(salt, pw)
 				passwordHashHexString = string.upper(passwordHash.encode("hex"))
 
-				print 'Computed password hash: ' + passwordHashHexString
+				# print 'Computed password hash: ' + passwordHashHexString
 				
 				# Send password hash to server
-				print 'Logging in - 2: sending hash...'
+				# print 'Logging in - 2: sending hash...'
 
 				loginRequest = EncodeClientRequest( [ "login.hashed", passwordHashHexString ] )
 				serverSocket.send(loginRequest)
 
 				[loginResponse, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
-				printPacket(DecodePacket(loginResponse))
+				#printPacket(DecodePacket(loginResponse))
 
 				[isFromServer, isResponse, sequence, words] = DecodePacket(loginResponse)
 
 				# if the server didn't like our password, abort
 				if words[0] != "OK":
 					sys.exit(0);
-					
-				# oh hey, this is the actual kick function. you might want to customize this part!
-				# admin.kickPlayer <user> [reason]
-				command = "admin.kickPlayer " + "\"" + user + "\" " + "\"" + getRandomKickReason() + "\""
-
-				print command
+				
+				###
+				# Get players currently on server
+				###
+				
+				command = 'admin.listPlayers all'
+				words = shlex.split(command)
+				
+				# Send request to server on command channel
+				request = EncodeClientRequest(words)
+				serverSocket.send(request)
+				
+				# Wait for response from server
+				[packet, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
+				
+				[isFromServer, isResponse, sequence, words] = DecodePacket(packet)
+				
+				rconResponse = words
+				playersOnServer = [rconResponse[i] for i in range(13, len(rconResponse), 9)]
+				
+				###
+				# Compare players on server to whitelist
+				# Make list of pubbies
+				###
+				
+				whitelist = getWhitelist()
+			
+				pubbies = set(playersOnServer).difference(whitelist)
+				
+				###
+				# Kick a random pubby
+				###
+				
+				command = "admin.kickPlayer " + "\"" + ''.join(random.sample(pubbies, 1)) + "\" " + "\"" + getRandomKickReason() + "\""
 				
 				words = shlex.split(command)
 
-				if len(words) >= 1:
-
-					if "quit" == words[0]:
-						running = False
-
-					# Send request to server on command channel
-					request = EncodeClientRequest(words)
-					serverSocket.send(request)
-
-					# Wait for response from server
-					[packet, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
-
-					[isFromServer, isResponse, sequence, words] = DecodePacket(packet)
-
-					# The packet from the server should 
-					# For now, we always respond with an "OK"
-					if not isResponse:
-						print 'Received an unexpected request packet from server, ignored:'
-
-					printPacket(DecodePacket(packet))
-					
+				# Send request to server on command channel
+				request = EncodeClientRequest(words)
+				serverSocket.send(request)					
 
 		except socket.error, detail:
 			print 'Network error:', detail[1]
