@@ -379,12 +379,19 @@ if __name__ == '__main__':
 				###
 				# Kick a random pubby
 				###
+				unluckyPubby = ''.join(random.sample(pubbies, 1))
+				kickReason = getRandomKickReason()
 				
-				command = "admin.kickPlayer " + "\"" + ''.join(random.sample(pubbies, 1)) + "\" " + "\"" + getRandomKickReason() + "\""
+				command = "admin.kickPlayer " + "\"" + unluckyPubby + "\" " + "\"" + kickReason + "\""
 				
 				words = shlex.split(command)
-
-				# Send request to server on command channel
+				request = EncodeClientRequest(words)
+				serverSocket.send(request)
+				receivePacket(serverSocket, receiveBuffer)
+				
+				command = "admin.say " + "\"" + unluckyPubby + " was kicked: " + kickReason + "\" all"
+				
+				words = shlex.split(command)
 				request = EncodeClientRequest(words)
 				serverSocket.send(request)
 
@@ -403,7 +410,7 @@ if __name__ == '__main__':
 			if serverSocket is not None:
 				serverSocket.close()
 
-			print "Done"
+			# print "Done"
 		except:
 			raise
 
