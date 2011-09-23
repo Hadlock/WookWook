@@ -305,20 +305,20 @@ if __name__ == '__main__':
 			serverSocket.setblocking(1)
 
 			if pw is not None:
-				# print 'Logging in - 1: retrieving salt...'
+				print 'Logging in - 1: retrieving salt...'
 
 				# Retrieve this connection's 'salt' (magic value used when encoding password) from server
 				getPasswordSaltRequest = EncodeClientRequest( [ "login.hashed" ] )
 				serverSocket.send(getPasswordSaltRequest)
 
 				[getPasswordSaltResponse, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
-				#printPacket(DecodePacket(getPasswordSaltResponse))
+				printPacket(DecodePacket(getPasswordSaltResponse))
 
 				[isFromServer, isResponse, sequence, words] = DecodePacket(getPasswordSaltResponse)
 
 				# if the server doesn't understand "login.hashed" command, abort
 				if words[0] != "OK":
-					sys.exit(0);
+					sys.exit(3) # error
 
 				# print 'Received salt: ' + words[1]
 
@@ -327,22 +327,22 @@ if __name__ == '__main__':
 				passwordHash = generatePasswordHash(salt, pw)
 				passwordHashHexString = string.upper(passwordHash.encode("hex"))
 
-				# print 'Computed password hash: ' + passwordHashHexString
+				print 'Computed password hash: ' + passwordHashHexString
 				
 				# Send password hash to server
-				# print 'Logging in - 2: sending hash...'
+				print 'Logging in - 2: sending hash...'
 
 				loginRequest = EncodeClientRequest( [ "login.hashed", passwordHashHexString ] )
 				serverSocket.send(loginRequest)
 
 				[loginResponse, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
-				#printPacket(DecodePacket(loginResponse))
+				printPacket(DecodePacket(loginResponse))
 
 				[isFromServer, isResponse, sequence, words] = DecodePacket(loginResponse)
 
 				# if the server didn't like our password, abort
 				if words[0] != "OK":
-					sys.exit(0);
+					sys.exit(3) # error
 				
 				###
 				# Get players currently on server
@@ -363,6 +363,8 @@ if __name__ == '__main__':
 				rconResponse = words
 				playersOnServer = [rconResponse[i] for i in range(13, len(rconResponse), 9)]
 				
+				if len(playersOnServer) < 32: sys.exit(1) # Server not full
+				
 				###
 				# Compare players on server to whitelist
 				# Make list of pubbies
@@ -371,6 +373,8 @@ if __name__ == '__main__':
 				whitelist = getWhitelist()
 			
 				pubbies = set(playersOnServer).difference(whitelist)
+				
+				if len(pubbies) == 0: sys.exit(2) # No pubbies on server
 				
 				###
 				# Kick a random pubby
@@ -382,7 +386,7 @@ if __name__ == '__main__':
 
 				# Send request to server on command channel
 				request = EncodeClientRequest(words)
-				serverSocket.send(request)					
+				serverSocket.send(request)
 
 		except socket.error, detail:
 			print 'Network error:', detail[1]
@@ -403,4 +407,4 @@ if __name__ == '__main__':
 		except:
 			raise
 
-	sys.exit( 0 )
+	sys.exit(0)
