@@ -205,7 +205,7 @@ def getWhitelist():
 
     unfilteredWhitelist = pagehandle.read()
 
-    filteredWhitelist = unfilteredWhitelist.split()
+    filteredWhitelist = unfilteredWhitelist.splitlines()
     filteredWhitelist = frozenset(filteredWhitelist) # removes duplicates
     
     return filteredWhitelist
