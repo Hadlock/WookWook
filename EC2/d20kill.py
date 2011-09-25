@@ -180,8 +180,6 @@ if __name__ == '__main__':
 		# if the server didn't know about the command, abort
 		if words[0] != "OK":
 			sys.exit(0);
-		
-		print 'Now waiting for events.'
 
 		while True:
 			# Wait for packet from server
