@@ -188,15 +188,12 @@ if __name__ == '__main__':
 			[packet, receiveBuffer] = receivePacket(serverSocket, receiveBuffer)
 
 			[isFromServer, isResponse, sequence, words] = DecodePacket(packet)
-			
+						
 			if ((words[0] == 'player.onKill') and (words[3] == 'D2.0')):
 				command = 'admin.say ' + "\"" + ''.join(words[2]) + ' got GROVER HOUSED by ' + ''.join(words[1]) + "\" all"
 				words = shlex.split(command)
 				request = EncodeClientRequest(words)
 				serverSocket.send(request)
-
-	except socket.error, detail:
-		print 'Network error:', detail[1]
 
 	except EOFError, KeyboardInterrupt:
 		pass
