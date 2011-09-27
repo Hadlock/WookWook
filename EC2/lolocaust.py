@@ -382,14 +382,14 @@ if __name__ == '__main__':
 				unluckyPubby = ''.join(random.sample(pubbies, 1))
 				kickReason = getRandomKickReason()
 				
-				command = "admin.kickPlayer " + "\"" + unluckyPubby + "\" " + "\"" + kickReason + "\""
+				command = "admin.kickPlayer " + "\"" + unluckyPubby + "\" " + "\" kicked for vip slot: " + kickReason + "\""
 				
 				words = shlex.split(command)
 				request = EncodeClientRequest(words)
 				serverSocket.send(request)
 				receivePacket(serverSocket, receiveBuffer)
 				
-				command = "admin.say " + "\"" + unluckyPubby + " was kicked: " + kickReason + "\" all"
+				command = "admin.say " + "\"" + unluckyPubby + " was randomly kicked for vip slot: " + kickReason + "\" all"
 				
 				words = shlex.split(command)
 				request = EncodeClientRequest(words)
