@@ -382,7 +382,7 @@ if __name__ == '__main__':
 				unluckyPubby = ''.join(random.sample(pubbies, 1))
 				kickReason = getRandomKickReason()
 				
-				command = "admin.kickPlayer " + "\"" + unluckyPubby + "\" " + "\" kicked for vip slot: " + kickReason + "\""
+				command = "admin.kickPlayer " + "\"" + unluckyPubby + "\" " + "\"Randomly kicked for vip slot: " + kickReason + "\""
 				
 				words = shlex.split(command)
 				request = EncodeClientRequest(words)
