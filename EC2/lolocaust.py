@@ -387,7 +387,6 @@ if __name__ == '__main__':
 				words = shlex.split(command)
 				request = EncodeClientRequest(words)
 				serverSocket.send(request)
-				receivePacket(serverSocket, receiveBuffer)
 				
 				command = "admin.say " + "\"" + unluckyPubby + " was randomly kicked for vip slot: " + kickReason + "\" all"
 				
