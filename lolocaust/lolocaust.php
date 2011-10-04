@@ -66,6 +66,139 @@ else
 }
 
 /*
+
+Ported RCON script from Python to PHP by XxMASTERUKxX
+http://forums.electronicarts.co.uk/battlefield-bad-company-2-pc/924605-there-bc2-server-status-script.html
+
+*/
+
+$ip = '';
+$query_port = 48888; // rcon query port
+
+$clientSequenceNr = 0;
+
+function EncodeClientRequest($words)
+{
+    global $clientSequenceNr;
+    $packet = EncodePacket(False, False, $clientSequenceNr, $words);
+    $clientSequenceNr++;
+    return $packet;
+}
+
+function EncodeHeader($isFromServer, $isResponse, $sequence)
+{
+    $header = $sequence & 0x3fffffff;
+    if ($isFromServer)
+        $header += 0x80000000;
+    if ($isResponse)
+        $header += 0x40000000;
+
+    // Not tested this bit
+        
+    return pack('I', $header);
+}
+
+function DecodeHeader($data)
+{
+    $header = unpack('I', $data);    
+    return array($header & 0x80000000, $header & 0x40000000, $header & 0x3fffffff);
+}
+
+
+function EncodeInt32($size)
+{
+    return pack('I', $size);
+}
+
+function DecodeInt32($data)
+{
+    $decode = unpack('I', $data);
+    return $decode[1];
+}
+    
+
+function EncodeWords($words)
+{
+    $size = 0;
+    $encodedWords = '';
+    foreach ($words as $word)
+    {
+        $strWord = $word;
+        $encodedWords .= EncodeInt32(strlen($strWord));
+        $encodedWords .= $strWord;
+        $encodedWords .= "\x00";
+        $size += strlen($strWord) + 5;
+    }
+    return array($size, $encodedWords);
+}
+    
+function DecodeWords($size, $data)
+{
+    $numWords = DecodeInt32($data);        
+    $offset = 0;    
+    while ($offset < $size)
+    {
+        $wordLen = DecodeInt32(substr($data,$offset,4));
+        $word = substr($data,$offset+4,$wordLen);
+        $words[] = $word;
+        $offset += $wordLen + 5;        
+    }
+
+    return $words;
+}
+
+function EncodePacket($isFromServer, $isResponse, $sequence, $words)
+{
+    $words = explode(' ',$words);
+    $encodedHeader = EncodeHeader($isFromServer, $isResponse, $sequence);        
+    $encodedNumWords = EncodeInt32(count($words));    
+    list($wordsSize, $encodedWords) = EncodeWords($words);
+    $encodedSize = EncodeInt32($wordsSize + 12);    
+    return $encodedHeader . $encodedSize . $encodedNumWords . $encodedWords;
+}
+
+function DecodePacket($data)
+{
+    list($isFromServer, $isResponse, $sequence) = DecodeHeader($data);
+    $wordsSize = DecodeInt32(substr($data,4,4)) - 12;
+    $words = DecodeWords($wordsSize, substr($data,12));
+    return array($isFromServer, $isResponse, $sequence, $words);
+}
+
+$sock = fsockopen( "tcp://" . $ip, $query_port);
+if($sock != false)
+{
+    socket_set_timeout($sock, 0, 500000);
+    fwrite($sock,EncodeClientRequest("serverInfo")); // OK, serverName, current playercount, max playercount , gamemode, map    
+    list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
+
+    print_r($words);    
+    
+    /*
+    //  If its your server you could add 
+    //
+    //  fwrite($sock,EncodeClientRequest("login.plainText PASSWORD"));
+    //  list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
+    //
+    //  fwrite($sock,EncodeClientRequest("admin.listPlayers all));
+    //  list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096)); // clantag, player name, squadID, teamID
+    //
+    //  Then $words contains an array of players on the server (I havn't tested this as I don't have a server to test on)
+    */        
+    
+    fwrite($sock,EncodeClientRequest("quit"));
+    list($isFromServer, $isResponse, $sequence, $words) =  DecodePacket(fread($sock, 4096));  
+    fclose($sock);
+}
+
+/*
+
+End ported RCON
+
+*/
+
+
+/*
 ------------------------------------------------------------
 Step 0: Login
 ------------------------------------------------------------
