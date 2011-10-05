@@ -163,6 +163,12 @@ End ported RCON
 
 */
 
+/*
+
+The rest of this code is left over from Hadlock's original script.
+I haven't determined how much is still useful now that webpage scraping is not needed.
+Code commented to preserve yet prevent unpredicted behavior.
+
 for ($i = 0; $i < $count; $i++)
 {
 	if ($i == 1) /* Scrape ___VIEWSTATE */
@@ -207,7 +213,7 @@ for ($i = 0; $i < $count; $i++)
 			Response:  InvalidArguments 
 			Response:  PlayerNotFound  - Player name doesn't exist on server 
 			Effect:  Kick player <soldier name> from server 
-			Comments:  Reason text is optional. Default reason is “Kicked by administrator”. 
+			Comments:  Reason text is optional. Default reason is ï¿½Kicked by administratorï¿½. 
 		*/
 		
 		if (fopen(PYTHON_SCRIPT_URL ."?victim=". urlencode($pubbies[$victim]) ."&kickReason=". urlencode($kickReason), "r"))
@@ -272,5 +278,7 @@ unique. The following characters are ignored during the comparison:
 }
 
 curl_close($ch);
+
+*/
 
 ?>
