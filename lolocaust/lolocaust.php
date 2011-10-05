@@ -125,6 +125,21 @@ function DecodePacket($data)
     return array($isFromServer, $isResponse, $sequence, $words);
 }
 
+// Hashed password helper functions
+function hexstr($hexstr)
+{
+	$hexstr = str_replace(' ', '', $hexstr);
+	$hexstr = str_replace('\x', '', $hexstr);
+	$retstr = pack('H*', $hexstr);
+	return $retstr;
+}
+
+function strhex($string)
+{
+	$hexstr = unpack('H*', $string);
+	return array_shift($hexstr);
+}
+
 $sock = fsockopen( "tcp://" . SERVER_ADDRESS, SERVER_PORT);
 if($sock != false)
 {
@@ -132,7 +147,12 @@ if($sock != false)
     fwrite($sock,EncodeClientRequest("login.hashed"));    
     list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
     
-    print_r($words);
+    $salt = hexstr($words[1])
+    $hashedPassword = md5($salt . RCON_PASSWORD);
+    $hashedPasswordInHex =strtoupper(strhex($hashedPassword));
+    
+    fwrite($sock, EncodeClientRequest(["login.hashed", $hashedPasswordInHex]));
+    list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
     
     fclose($sock);
 }
