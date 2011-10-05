@@ -149,7 +149,7 @@ if($sock != false)
     
     $salt = hexstr($words[1]);
     $hashedPassword = md5($salt . RCON_PASSWORD, TRUE);
-    $hashedPasswordInHex =strtoupper(strhex($hashedPassword));
+    $hashedPasswordInHex = strtoupper(strhex($hashedPassword));
     
     fwrite($sock, EncodeClientRequest("login.hashed " . $hashedPasswordInHex));
     list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
