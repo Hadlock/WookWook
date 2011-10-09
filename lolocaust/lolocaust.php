@@ -125,6 +125,12 @@ function DecodePacket($data)
     return array($isFromServer, $isResponse, $sequence, $words);
 }
 
+/*
+
+END PORTED RCON
+
+*/
+
 // Hashed password helper functions
 function hexstr($hexstr)
 {
@@ -143,6 +149,7 @@ function strhex($string)
 $sock = fsockopen( "tcp://" . SERVER_ADDRESS, SERVER_PORT);
 if($sock != false)
 {
+    // Connect and authenticate to server
     socket_set_timeout($sock, 0, 500000);
     fwrite($sock,EncodeClientRequest("login.hashed"));    
     list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
@@ -154,131 +161,30 @@ if($sock != false)
     fwrite($sock, EncodeClientRequest("login.hashed " . $hashedPasswordInHex));
     list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
     
+    switch ($words[0])
+	{
+		case "OK":
+			break;
+		case "PasswordNotSet":
+			exit("Server reports RCON password is not set.");
+			break;
+		case "InvalidPasswordHash":
+			exit("Server reports password is incorrect.");
+			break;
+		case "InvalidArguments":
+			exit("Server reports invalid arguments.");
+			break;
+		default:
+			exit("Unexpected problem while connecting to server.");
+	}
+		
+	// Authenticated.
+	
+	// Get server information.
+	fwrite($sock, EncodeClientRequest("serverInfo"));
+	list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
+	
     fclose($sock);
 }
-
-/*
-
-End ported RCON
-
-*/
-
-/*
-
-The rest of this code is left over from Hadlock's original script.
-I haven't determined how much is still useful now that webpage scraping is not needed.
-Code commented to preserve yet prevent unpredicted behavior.
-
-for ($i = 0; $i < $count; $i++)
-{
-	if ($i == 1) /* Scrape ___VIEWSTATE */
-	{
-		curl_setopt($ch, CURLOPT_POST, false);
-	}
-	else
-	{
-		curl_setopt($ch, CURLOPT_POST, true);
-	}
-
-	if ($i == 2)
-	{
-		$fields[2]['___VIEWSTATE'] = urlencode($viewstate_scrape[1]);
-	}
-
-	curl_setopt($ch, CURLOPT_REFERER, $referers[$i]);
-	curl_setopt($ch, CURLOPT_URL, $urls[$i]);
-
-	if ($i == 3)
-	{
-		$vips = array_merge(get_vip_list(), get_queue_list());
-
-		foreach ($players[1] as $p)
-		{
-			/* Pubbie scum found, lock on */
-			if (!in_array($p, $vips))
-				$pubbies[] = $p;			
-		}
-		
-		if (empty($pubbies))
-		{
-			die("<strong>lolocaust done</strong>. no pubbies found!");
-		}
-
-		/* Select the lucky winner */
-		$victim = rand(0, count($pubbies) - 1);
-		
-		/*
-			Request:  admin.kickPlayer  <soldier name: player name> [reason: string] 
-			Response:  OK    - Player did exist, and got kicked 
-			Response:  InvalidArguments 
-			Response:  PlayerNotFound  - Player name doesn't exist on server 
-			Effect:  Kick player <soldier name> from server 
-			Comments:  Reason text is optional. Default reason is �Kicked by administrator�. 
-		*/
-		
-		if (fopen(PYTHON_SCRIPT_URL ."?victim=". urlencode($pubbies[$victim]) ."&kickReason=". urlencode($kickReason), "r"))
-			echo "<br /><br /><strong>lolocaust done</strong>. your victim was: " . $pubbies[$victim] . ", and the *~ZANY~* kick reason was: <br /><br />" . $kickReason;
-		else
-			die("fatal error: couldn't invoke lolocaust.py");
-			
-	}
- 
-	$fields_concatenated = "";
-
-	if (isset($fields[$i]))
-	{
-		foreach($fields[$i] as $key => $value)
-		{
-			$fields_concatenated .= $key . "=" . $value . "&";
-		}
-	}
-
-	$fields_concatenated = rtrim($fields_concatenated, "&");
-
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_concatenated);
-	
-	if ($i != 3)
-		$result = curl_exec($ch);
-
-	if ($result == false)
-		die("fatal error on step " . $i + 1);
-
-	if ($i == 1)
-	{
-		/*
-		Scrape ___VIEWSTATE
-
-		id="___VIEWSTATE" value="{token}"
-
-		*/
-
-		preg_match("/id=\"___VIEWSTATE\" value=\"(.*)\"/", $result, $viewstate_scrape);
-
-	}
-	if ($i == 2)
-	{
-		/* Scrape player list */
-		
-		/*
-		A player has a name from 4 to 16 characters in length, inclusive. The allowed characters are: 
-ABCDEFGHIJKLMNOPQRSTUVWXYZ  
-abcdefghijklmnopqrstuvwxyz  
-0123456789  
-_ - & ( ) * + . / : ; < = > ? [ ] ^ { | } ~ <space> 
-When a player is creating a new persona, it is compared against all other persona names; the new name must be 
-unique. The following characters are ignored during the comparison: 
-- _ <space> 
-*/
-		/* fix: need to allow < and > in player names */
-		preg_match_all("/<BR>([a-zA-Z0-9_\-&()*+.\/:;=?\[\]^{|}~ ]*)<BR>EA_/", $result, $players);
-		
-		// old, just keeping it around in case:
-		// preg_match_all("/\<BR\>([a-zA-Z0-9\.`~!@#$%^&*\(\)\-\_\[\] ]*)<BR\>EA_/", $result, $players);
-	}
-}
-
-curl_close($ch);
-
-*/
 
 ?>
