@@ -1,39 +1,8 @@
 <?php
 
-$_GET['lolocaust'] = true;
-require_once("../vip/include/funcs.php");
-
 define("SERVER_ADDRESS", "0.0.0.0");
 define("SERVER_PORT", 48888);
 define("RCON_PASSWORD", "123456");
-$players;
-$pubbies;
-$victim;
-
-/* code commented as script will perform checks before modifying VIP list
-
-if (!isset($_GET['force']))
-{	
-	if (lolocaust_init() == false)
-		die("lolocaust failed: can only run once per minute");
-}
-
-*/
-
-$kickReasons = get_kickreasons();
-		
-$randMax = count($kickReasons) - 1;
-$kickReason = $kickReasons[rand(0, $randMax)];
-
-/*
-
-Ported RCON script from Python to PHP by XxMASTERUKxX
-http://forums.electronicarts.co.uk/battlefield-bad-company-2-pc/924605-there-bc2-server-status-script.html
-
-*/
-
-$ip = '';
-$query_port = 48888; // rcon query port
 
 $clientSequenceNr = 0;
 
@@ -64,7 +33,6 @@ function DecodeHeader($data)
     return array($header & 0x80000000, $header & 0x40000000, $header & 0x3fffffff);
 }
 
-
 function EncodeInt32($size)
 {
     return pack('I', $size);
@@ -75,7 +43,6 @@ function DecodeInt32($data)
     $decode = unpack('I', $data);
     return $decode[1];
 }
-    
 
 function EncodeWords($words)
 {
@@ -177,13 +144,22 @@ if($sock != false)
 		default:
 			exit("Unexpected problem while connecting to server.");
 	}
-		
-	// Authenticated.
 	
-	// Get server information.
+	// Get server information
 	fwrite($sock, EncodeClientRequest("serverInfo"));
 	list($isFromServer, $isResponse, $sequence, $words) = DecodePacket(fread($sock, 4096));
 	
+	// Return if server is not full
+	list($currentNumOfPlayers, $currentMaxOfPlayers) = ($words[2], $words[3]);
+	
+	if($currentNumOfPlayers < $currentMaxOfPlayers)
+	{
+		fwrite($sock, EncodeClientRequest("logout"));
+		fclose($sock);
+		return "Server is not full";
+	}
+	
+	fwrite($sock, EncodeClientRequest("logout"));
     fclose($sock);
 }
 
