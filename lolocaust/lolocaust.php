@@ -4,6 +4,13 @@ define("SERVER_ADDRESS", "0.0.0.0");
 define("SERVER_PORT", 48888);
 define("RCON_PASSWORD", "123456");
 
+/*
+
+Ported RCON script from Python to PHP by XxMASTERUKxX
+http://forums.electronicarts.co.uk/battlefield-bad-company-2-pc/924605-there-bc2-server-status-script.html
+
+*/
+
 $clientSequenceNr = 0;
 
 function EncodeClientRequest($words)
